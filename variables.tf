@@ -1,3 +1,8 @@
+variable "vpc_name" {
+  type = string
+  description = "Name of the VPC"
+  default = "test-vpc"
+}
 variable "region" {
   type = string
   description = "The region where you want to create VPC"
