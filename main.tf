@@ -1,5 +1,5 @@
 resource "aws_vpc" "main" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block = var.vpc_cidr
   tags       = { "Name" = "trishul_test_vpc" }
 }
 
@@ -11,25 +11,25 @@ resource "aws_internet_gateway" "gw" {
 # created subnets (public subnet)
 resource "aws_subnet" "subnet_public_1" {
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.1.0/24"
+  cidr_block              = var.subnet_cidrs.public_a
   availability_zone       = "us-east-1a"
   map_public_ip_on_launch = true
 }
 resource "aws_subnet" "subnet_public_2" {
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.2.0/24"
+  cidr_block              = var.subnet_cidrs.public_b
   availability_zone       = "us-east-1b"
   map_public_ip_on_launch = true
 }
 # (private subnet)
 resource "aws_subnet" "subnet_private_1" {
   vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.3.0/24"
+  cidr_block        = var.subnet_cidrs.private_a
   availability_zone = "us-east-1a"
 }
 resource "aws_subnet" "subnet_private_2" {
   vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.4.0/24"
+  cidr_block        = var.subnet_cidrs.private_b
   availability_zone = "us-east-1b"
 }
 
@@ -185,7 +185,7 @@ resource "aws_lb_listener" "alb_listener" {
 resource "aws_launch_template" "asg_launch_template" {
   name_prefix = "trishul-web-server"
   image_id = "ami-0ec18f6103c5e0491"
-  instance_type = "t2.micro"
+  instance_type = var.instance_type
   # security_group_names = [aws_security_group.asg_security.id]
   vpc_security_group_ids = [aws_security_group.asg_security.id]
   user_data = base64encode(file("main.sh"))
@@ -193,9 +193,9 @@ resource "aws_launch_template" "asg_launch_template" {
 # asg
 resource "aws_autoscaling_group" "asg_group" {
   name = "trishul_asg"
-  max_size = 4
-  min_size = 2
-  desired_capacity = 2
+  max_size = var.asg_capacity.max_size
+  min_size = var.asg_capacity.min_size
+  desired_capacity = var.asg_capacity.desired_capacity
   vpc_zone_identifier = [aws_subnet.subnet_private_1.id, aws_subnet.subnet_private_2.id]
   health_check_type = "EC2"
   health_check_grace_period = 300
